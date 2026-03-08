@@ -1,14 +1,11 @@
 import discord
+from discord.gateway import DiscordWebSocket
 import datetime
 import json
 import os
 from rich.console import Console
 from rich.align import Align
 from rich.panel import Panel
-
-# This is a simple Discord Rich Presence client for VR
-# I will add more features soon like VR platform support
-# because this version only works with Meta RPC without platform
 
 ##################################### CONFIG ##############################
 
@@ -29,6 +26,7 @@ logo = r"""
 
 """
 
+
 config = load_config()
 
 def clear_console():
@@ -48,16 +46,40 @@ LARGE_IMAGE = config['large_image']
 
 console = Console()
 
-start_time = datetime.datetime( 
-            2001, 1, 1, 12, 0, 0,
-            tzinfo=datetime.timezone.utc
-        )
+start_time = datetime.datetime.now(datetime.timezone.utc)
+
 
 welcome = Panel(Align.center(logo), title="RPCVR", style="blue")
 
+##############################################################
+
+original_identify = DiscordWebSocket.identify
+
+async def identify_vr(self):
+    payload = {
+        "op": 2,
+        "d": {
+            "token": self.token,
+            "capabilities": 16381,
+            "properties": {
+                "os": "VR",
+                "browser": "Discord VR",
+                "device": "Discord VR"
+            },
+            "compress": True,
+            "large_threshold": 250
+        }
+    }
+
+    await self.send_as_json(payload)
+
+DiscordWebSocket.identify = identify_vr
+
 ################################ RPC ##########################
 class RPC(discord.Client):
+
     async def on_ready(self):
+        
         activity = discord.Activity(
             application_id=APPLICATION_ID,
             type=discord.ActivityType.playing,
@@ -68,14 +90,15 @@ class RPC(discord.Client):
             assets=discord.ActivityAssets(
                 large_image=LARGE_IMAGE,
             )
-        ) 
+        )   
 
-        await self.change_presence(activity=activity)
-        
+        await self.change_presence(activity=activity, status=discord.Status.online)
+
+##################################################################
         clear_console()
-        console.print(welcome)
-        console.print(Align.center(f"| [bold green]USER: {self.user} , ID: {self.user.id}[/bold green] |"))
-        
+        user = Panel(Align.center(f"User : {self.user.display_name} | ID : {self.user.id}"),title=f"Welcome : {self.user}", style="blue")
+        console.print(welcome, user)
+               
 
 client = RPC()
 client.run(TOKEN)
