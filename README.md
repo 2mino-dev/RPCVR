@@ -4,6 +4,9 @@
 
 This is a simple Discord Rich Presence client for vr game using `discord.py-self`
 
+> [!WARNING]
+> Your account could be suspended or banned if detected
+
 ## Features
 - Shows Rich Presence on Discord for VR games
 - Displays details state and large image
