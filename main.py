@@ -1,6 +1,8 @@
 import discord
 from discord.gateway import DiscordWebSocket
+import asyncio
 import datetime
+import random
 import json
 import os
 from rich.console import Console
@@ -13,7 +15,39 @@ def load_config():
     with open('config.json', 'r') as f:
         return json.load(f)
     
+def clear_console():
+    os.system('cls' if os.name == 'nt' else 'clear')
 
+config = load_config()
+
+TOKEN = config['config']['token']
+
+APPLICATION_ID = config['config']['application_id']
+
+NAME = config['rpc']['name']
+
+DETAILS = config['rpc']['details']
+
+LARGE_IMAGE = config['rpc']['large_image']
+
+CURRENT_SIZE = config['party']['current_size']
+
+MAX_SIZE = config['party']['max_size']
+
+STATE = config['party']['state']
+
+console = Console()
+
+start_time = datetime.datetime.now(datetime.timezone.utc)
+
+if config["party"]["enable"]:
+    party = discord.ActivityParty(
+        current_size=CURRENT_SIZE,
+        max_size=MAX_SIZE
+    )
+else:
+    party = None
+    
 logo = r"""
  /$$$$$$$  /$$$$$$$   /$$$$$$  /$$    /$$ /$$$$$$$ 
 | $$__  $$| $$__  $$ /$$__  $$| $$   | $$| $$__  $$
@@ -25,29 +59,6 @@ logo = r"""
 |__/  |__/|__/       \______/     \_/    |__/  |__/
 
 """
-
-
-config = load_config()
-
-def clear_console():
-    os.system('cls' if os.name == 'nt' else 'clear')
-
-TOKEN = config['token']
-
-APPLICATION_ID = config['application_id']
-
-NAME = config['rpcname']
-
-DETAILS = config['details']
-
-STATE = config['state']
-
-LARGE_IMAGE = config['large_image']
-
-console = Console()
-
-start_time = datetime.datetime.now(datetime.timezone.utc)
-
 
 welcome = Panel(Align.center(logo), title="RPCVR", style="blue")
 
@@ -79,12 +90,13 @@ DiscordWebSocket.identify = identify_vr
 class RPC(discord.Client):
 
     async def on_ready(self):
-        
-        activity = discord.Activity(
-            application_id=APPLICATION_ID,
+        initial_activity = discord.Activity(
             type=discord.ActivityType.playing,
+            application_id=APPLICATION_ID,
             name=NAME,
             details=DETAILS,
+            state=STATE,
+            party=party,
             timestamps=discord.ActivityTimestamps(start=start_time),
             platform = discord.ActivityPlatform.meta_quest,
             assets=discord.ActivityAssets(
@@ -92,12 +104,58 @@ class RPC(discord.Client):
             )
         )   
 
-        await self.change_presence(activity=activity, status=discord.Status.online)
+        await self.change_presence(activity=initial_activity, status=discord.Status.online)
 
-##################################################################
         clear_console()
-        user = Panel(Align.center(f"User : {self.user.display_name} | ID : {self.user.id}"),title=f"Welcome : {self.user}", style="blue")
-        console.print(welcome, user)
+        userinfo = Panel(Align.center(f"User : {self.user.display_name} | ID : {self.user.id}"),title=f"Welcome : {self.user}", style="blue")
+        console.print(welcome, userinfo)
+
+        self.loop.create_task(rpc_loop(self, initial_activity))
+
+################################ loop ################################
+
+NAME1 = config['loop1']['name']
+DETAILS1 =  config['loop1']['details']
+LARGE_IMAGE1 = config['loop1']['large_image']
+
+NAME2 = config['loop2']['name']
+DETAILS2 =  config['loop2']['details']
+LARGE_IMAGE2 = config['loop2']['large_image']
+
+async def rpc_loop(client, initial_activity):
+    while True:
+        if config["config"].get("loop", False):
+            activities = [
+                discord.Activity(
+                    application_id=APPLICATION_ID,
+                    type=discord.ActivityType.playing,
+                    name=NAME1,
+                    details=DETAILS1,
+                    state=STATE,
+                    party=party,
+                    timestamps=discord.ActivityTimestamps(start=start_time),
+                    platform=discord.ActivityPlatform.meta_quest,
+                    assets=discord.ActivityAssets(large_image=LARGE_IMAGE1)
+                ),
+                discord.Activity(
+                    application_id=APPLICATION_ID,
+                    type=discord.ActivityType.playing,
+                    name=NAME2,
+                    details=DETAILS2,
+                    state=STATE,
+                    party=party,
+                    timestamps=discord.ActivityTimestamps(start=start_time),
+                    platform=discord.ActivityPlatform.meta_quest,
+                    assets=discord.ActivityAssets(large_image=LARGE_IMAGE2)
+                )
+            ]
+            activity = random.choice(activities)
+        else:
+            activity = initial_activity
+        
+        await client.change_presence(activity=activity, status=discord.Status.online)
+        await asyncio.sleep(10)
+
                
 
 client = RPC()
