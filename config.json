@@ -1,8 +1,28 @@
 {
-    "token": "your-token",
-    "application_id": 12345678,
-    "rpcname": "",
+  "rpc": {
+    "name": "",
     "details": "",
-    "state": "",
-    "large_image": ""
+    "large_image": "add your iamge url"
+  },
+  "party":{
+    "state": "in rank",
+    "enable": true,
+    "current_size": 8,
+    "max_size": 10
+  },
+  "config": {
+    "token": "your-token",
+    "application_id": 1234,
+    "loop": false
+  },
+  "loop1": {
+    "name": "something",
+    "details": "",
+    "large_image": "add your iamge url"
+  },
+  "loop2": {
+    "name": "something2",
+    "details": "",
+    "large_image": "add your image url"
+  }
 }
