@@ -66,7 +66,7 @@ welcome = Panel(Align.center(logo), title="RPCVR", style="blue")
 
 original_identify = DiscordWebSocket.identify
 
-async def identify_vr(self):
+async def vr(self):
     payload = {
         "op": 2,
         "d": {
@@ -84,7 +84,7 @@ async def identify_vr(self):
 
     await self.send_as_json(payload)
 
-DiscordWebSocket.identify = identify_vr
+DiscordWebSocket.identify = vr
 
 ################################ RPC ##########################
 class RPC(discord.Client):
